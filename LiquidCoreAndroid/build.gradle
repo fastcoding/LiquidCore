@@ -5,6 +5,9 @@ apply plugin: 'com.github.dcendents.android-maven'
 android {
     compileSdkVersion 26
     buildToolsVersion '26.0.3'
+	  lintOptions {
+          abortOnError false
+      }
 
     defaultConfig {
         minSdkVersion 16

@@ -181,4 +181,4 @@ endif()
 string (REPLACE ";" " " CPP_FLAGS_STR "${CFLAGS_RELEASE} ${DEFS_RELEASE}")
 SET( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${CPP_FLAGS_STR}" )
 
-target_link_libraries( liquidcore node ${log-lib} )
+target_link_libraries( liquidcore node ${log-lib} stdc++)
