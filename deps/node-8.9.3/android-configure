@@ -50,6 +50,8 @@ esac
 NDK_PATH=$1
 function make_toolchain {
     $NDK_PATH/build/tools/make-standalone-toolchain.sh \
+				--stl=gnustl \
+				--force \
         --toolchain=$TOOLCHAIN_NAME-$CC_VER \
         --arch=$ARCH \
         --install-dir=$TOOLCHAIN \
@@ -69,9 +71,12 @@ else
 fi
 export PATH=$TOOLCHAIN/bin:$PATH
 export AR=$TOOLCHAIN/bin/$SUFFIX-ar
-export CC=$TOOLCHAIN/bin/$SUFFIX-gcc
-export CXX=$TOOLCHAIN/bin/$SUFFIX-g++
-export LINK=$TOOLCHAIN/bin/$SUFFIX-g++
+export CC=$TOOLCHAIN/bin/clang
+#$SUFFIX-gcc
+export CXX=$TOOLCHAIN/bin/clang++
+#$SUFFIX-g++
+export LINK=$TOOLCHAIN/bin/clang++
+#$SUFFIX-g++
 
 GYP_DEFINES="target_arch=$ARCH"
 GYP_DEFINES+=" v8_target_arch=$DEST_CPU"
@@ -85,5 +90,6 @@ if [ -f "configure" ]; then
         --dest-os=android \
         --openssl-no-asm \
         --without-intl \
+				--debug \
         --shared
 fi

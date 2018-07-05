@@ -89,9 +89,9 @@
             'cflags': [ '-gxcoff' ],
             'ldflags': [ '-Wl,-bbigtoc' ],
           }],
-          ['OS == "android" and node_shared!="true"', {
-            'cflags': [ '-fPIE' ],
-            'ldflags': [ '-fPIE', '-pie' ]
+          ['OS == "android"', {
+            'cflags': [ '-fPIC' ],
+            'ldflags': [ '-pie' ]
           }],
           ['node_shared=="true"', {
             'msvs_settings': {
@@ -143,9 +143,9 @@
           ['OS!="mac" and OS!="win"', {
             'cflags': [ '-fno-omit-frame-pointer' ],
           }],
-          ['OS == "android" and node_shared!="true"', {
-            'cflags': [ '-fPIE' ],
-            'ldflags': [ '-fPIE', '-pie' ]
+          ['OS == "android"', {
+            'cflags': [ '-fPIC' ],
+            'ldflags': ['-pie' ]
           }],
           ['node_shared=="true"', {
             'msvs_settings': {
@@ -289,7 +289,7 @@
       }],
       [ 'OS in "linux freebsd openbsd solaris android aix"', {
         'cflags': [ '-Wall', '-Wextra', '-Wno-unused-parameter', ],
-        'cflags_cc': [ '-fno-rtti', '-fno-exceptions', '-std=gnu++0x' ],
+        'cflags_cc': [ '-fno-rtti', '-fno-exceptions', '-std=gnu++11' ],
         'ldflags': [ '-rdynamic' ],
         'target_conditions': [
           # The 1990s toolchain on SmartOS can't handle thin archives.
