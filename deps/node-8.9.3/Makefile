@@ -65,7 +65,11 @@ V ?= 1
 ifeq ($(BUILDTYPE),Release)
 all: out/Makefile $(NODE_EXE)
 else
+ifeq ($(BUILDTYPE),Debug)
+all: out/Makefile $(NODE_G_EXE)
+else
 all: out/Makefile $(NODE_EXE) $(NODE_G_EXE)
+endif
 endif
 
 # The .PHONY is needed to ensure that we recursively use the out/Makefile
