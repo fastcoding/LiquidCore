@@ -90,10 +90,9 @@ void ContextGroup::init_v8()
 {
     s_mutex.lock();
     if (s_init_count++ == 0) {
-        /* Add any required flags here.
-        const char *flags = "--expose_gc";
+        /* Add any required flags here.*/
+        const char *flags = "--expose-gc ";//--max-old-space-size=400
         V8::SetFlagsFromString(flags, strlen(flags));
-        */
 
         s_platform = platform::CreateDefaultPlatform(4);
         V8::InitializePlatform(s_platform);
@@ -191,6 +190,7 @@ void ContextGroup::MarkZombie(boost::shared_ptr<JSValue> obj)
 void ContextGroup::MarkZombie(boost::shared_ptr<JSContext> obj)
 {
     if ((void*)&*obj != this) {
+
         m_zombie_mutex.lock();
         m_context_zombies.push_back(obj);
         m_zombie_mutex.unlock();
@@ -202,7 +202,8 @@ void ContextGroup::FreeZombies()
     m_zombie_mutex.lock();
     auto vit = m_value_zombies.begin();
     while (vit != m_value_zombies.end()) {
-        auto value = boost::atomic_load(&(*vit));
+        auto value =boost::atomic_load(&(*vit));
+        value->Dispose();
         value.reset();
         ++vit;
     }
@@ -237,6 +238,7 @@ void ContextGroup::FreeZombies()
 
     m_context_zombies.clear();
     m_zombie_mutex.unlock();
+    __android_log_print(ANDROID_LOG_INFO,"contextgroup.jni","freezombies called in GC");
 }
 
 void ContextGroup::callback(uv_async_t* handle)
@@ -343,14 +345,45 @@ void ContextGroup::GCPrologueCallback(GCType type, GCCallbackFlags flags)
     }
 }
 
+void ContextGroup::removeManage(Local<v8::Value> obj)
+{
+    m_values_mutex.lock();
+    auto it=std::find_if(m_managedValues.begin(),m_managedValues.end(),[&](boost::weak_ptr<JSValue> &e){
+        if (e.lock() && e.lock().get()->Value()==obj){
+            return true;
+        }
+        return false;
+    });
+    if (it!=m_managedValues.end()){
+        m_managedValues.erase(it);
+    }
+    m_values_mutex.unlock();
+}
+
 void ContextGroup::Manage(boost::shared_ptr<JSValue> obj)
 {
-    m_managedValues.push_back(obj);
+    m_values_mutex.lock();
+    auto it=std::find_if(m_managedValues.begin(),m_managedValues.end(),[&](boost::weak_ptr<JSValue> &o){
+        return o.lock().get()==obj.get();
+    });
+    if (it==m_managedValues.end()){
+        m_managedValues.push_back(obj);
+
+        __android_log_print(ANDROID_LOG_INFO, "ContextGroup.jni",
+                                "addeded managed jsvalue to group(list size=%d)",
+                                m_managedValues.size()
+        );
+
+    }else{
+        __android_log_print(ANDROID_LOG_INFO,"ContextGroup.jni","skip jsvalue - existed");
+    }
+    m_values_mutex.unlock();
 }
 
 void ContextGroup::Manage(boost::shared_ptr<JSContext> obj)
 {
     m_managedContexts.push_back(obj);
+
 }
 
 void ContextGroup::Dispose()
@@ -363,13 +396,15 @@ void ContextGroup::Dispose()
         m_runnables.clear();
 
         m_isolate->RemoveGCPrologueCallback(StaticGCPrologueCallback);
-
+        m_values_mutex.lock();
         for (auto it = m_managedValues.begin(); it != m_managedValues.end(); ++it) {
             boost::shared_ptr<JSValue> valid = (*it).lock();
             if (valid) {
                 valid->Dispose();
             }
         }
+        m_managedValues.clear();
+        m_values_mutex.unlock();
         for (auto it = m_managedContexts.begin(); it != m_managedContexts.end(); ++it) {
             boost::shared_ptr<JSContext> valid = (*it).lock();
             if (valid) {
@@ -377,7 +412,7 @@ void ContextGroup::Dispose()
             }
         }
         m_isDefunct = true;
-        m_managedValues.clear();
+
         m_managedContexts.clear();
         FreeZombies();
 

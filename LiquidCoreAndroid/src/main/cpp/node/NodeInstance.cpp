@@ -33,7 +33,7 @@
 */
 #include "node/NodeInstance.h"
 #include "node/nodedroid_file.h"
-
+#include <unistd.h>
 #if defined HAVE_PERFCTR
 #include "node_counters.h"
 #endif
@@ -87,7 +87,7 @@ void NodeInstance::spawnedThread()
 
     setenv("NODE_PATH", "/home/node_modules", true);
     if (m_jvm) {
-        strcpy(cmd, "node --expose-gc -e global.__nodedroid_onLoad();");
+        strcpy(cmd, "node -e global.__nodedroid_onLoad();");
     } else {
         strcpy(cmd, "node --expose-gc");
     }
@@ -99,6 +99,7 @@ void NodeInstance::spawnedThread()
     while (p2 && argc < kMaxArgs-1)
       {
         argv[argc++] = p2;
+
         p2 = strtok(0, " ");
       }
     argv[argc] = 0;
@@ -806,9 +807,9 @@ int NodeInstance::StartInstance(int argc, char *argv[]) {
 
 #if HAVE_OPENSSL
   {
-    /*std::string extra_ca_certs;
+    std::string extra_ca_certs;
     if (SafeGetenv("NODE_EXTRA_CA_CERTS", &extra_ca_certs))
-      crypto::UseExtraCaCerts(extra_ca_certs);*/
+      crypto::UseExtraCaCerts(extra_ca_certs);
   }
 #ifdef NODE_FIPS_MODE
   // In the case of FIPS builds we should make sure

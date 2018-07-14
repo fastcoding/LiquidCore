@@ -31,6 +31,7 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include <cstdlib>
+#include <android/log.h>
 #include <boost/make_shared.hpp>
 #include "Common/JSValue.h"
 #include "Common/Macros.h"
@@ -82,6 +83,7 @@ boost::shared_ptr<JSValue> JSValue::New(boost::shared_ptr<JSContext> context, Lo
     }
 
     context->Group()->Manage(value);
+
     return value;
 }
 
@@ -149,6 +151,7 @@ void JSValue::Dispose()
         boost::shared_ptr<JSContext> context = m_context;
         if (context && !m_isUndefined && !m_isNull) {
             V8_ISOLATE(context->Group(), isolate)
+
             if (m_wrapped) {
                 Local<Object> obj = Value()->ToObject(context->Value()).ToLocalChecked();
                 // Clear wrapper pointer if it exists, in case this object is still held by JS
@@ -157,6 +160,16 @@ void JSValue::Dispose()
                 obj->SetPrivate(context->Value(), privateKey,
                     Local<v8::Value>::New(isolate,Undefined(isolate)));
             }
+
+            if (!m_value.IsEmpty()){
+                Local<v8::Value> v=m_value.Get(isolate);
+                if (v->IsString()) {
+                    Local<v8::String> s=v->ToString();
+                    __android_log_print(ANDROID_LOG_INFO, "NodeJS", "release: string length=%d",
+                                        s->Utf8Length());
+                }
+            }
+                context->Group()->removeManage(m_value.Get(isolate));
             m_value.Reset();
             context.reset();
             V8_UNLOCK()

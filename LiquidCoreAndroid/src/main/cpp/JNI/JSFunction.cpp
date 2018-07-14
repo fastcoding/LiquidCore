@@ -154,9 +154,19 @@ void JSFunction::FunctionCallback(const FunctionCallbackInfo< v8::Value > &info)
         info.GetReturnValue().Set(info.This());
     } else {
         jlong retval = env->CallLongMethod(m_JavaThis, m_functionMid, objThis, argsArr);
+        boost::shared_ptr<JSValue> sp=SharedWrap<JSValue>::Shared(ctxt, retval);
+        Local<v8::Value> v=sp->Value();
+        if (!v.IsEmpty() && v->IsString()){
+            Local<v8::String> s=v->ToString();
+            __android_log_print(ANDROID_LOG_INFO,"NodeJS","retval: string length=%d: p=0x%x",s->Utf8Length(),retval);
+        }
         info.GetReturnValue().Set(
-                SharedWrap<JSValue>::Shared(ctxt, retval)->Value()
+            v
         );
+        for (int i=0; i<argumentCount; i++) {
+            ctxt->Group()->removeManage(v);
+            ctxt->Group()->MarkZombie(sp);
+        }
     }
 
     env->DeleteLocalRef(argsArr);

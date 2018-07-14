@@ -96,6 +96,7 @@ public:
     void RegisterGCCallback(void (*cb)(GCType type, GCCallbackFlags flags, void*), void *);
     void UnregisterGCCallback(void (*cb)(GCType type, GCCallbackFlags flags,void*), void *);
     void Manage(boost::shared_ptr<JSValue> obj);
+    void removeManage(Local<v8::Value> obj);
     void Manage(boost::shared_ptr<JSContext> obj);
     void Dispose();
     void MarkZombie(boost::shared_ptr<JSValue> obj);
@@ -131,11 +132,11 @@ private:
     bool m_manage_isolate;
     uv_loop_t *m_uv_loop;
     std::thread::id m_thread_id;
-    std::vector<boost::weak_ptr<JSValue>> m_managedValues;
+    std::list<boost::weak_ptr<JSValue>> m_managedValues;
     std::vector<boost::weak_ptr<JSContext>> m_managedContexts;
     std::vector<boost::shared_ptr<JSValue>> m_value_zombies;
     std::vector<boost::shared_ptr<JSContext>> m_context_zombies;
-    std::mutex m_zombie_mutex;
+    std::mutex m_zombie_mutex,m_values_mutex;
     bool m_isDefunct;
 
     struct GCCallback {

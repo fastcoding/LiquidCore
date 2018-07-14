@@ -93,7 +93,7 @@ set_target_properties(
              PROPERTIES IMPORTED_LOCATION
 
              # Provides the path to the library you want to import.
-             ${PROJECT_SOURCE_DIR}/../deps/node-8.9.3/prebuilt/${ARCH_SIZE}/symbols/${ANDROID_ABI}/libnode.so )
+             ${PROJECT_SOURCE_DIR}/../deps/node-8.9.3/prebuilt/${ARCH_SIZE}/nosymbols/${ANDROID_ABI}/libnode.so )
 else()
 set_target_properties(
              # Specifies the target library.
@@ -103,7 +103,7 @@ set_target_properties(
              PROPERTIES IMPORTED_LOCATION
 
              # Provides the path to the library you want to import.
-             ${PROJECT_SOURCE_DIR}/../deps/node-8.9.3/prebuilt/${ARCH_SIZE}/nosymbols/${ANDROID_ABI}/libnode.so )
+             ${PROJECT_SOURCE_DIR}/../deps/node-8.9.3/prebuilt/${ARCH_SIZE}/symbols/${ANDROID_ABI}/libnode.so )
 endif()
 
 include_directories(
@@ -171,7 +171,6 @@ list (APPEND CFLAGS_RELEASE
     -Wno-mismatched-tags
     -Wno-unused-result
     -fno-rtti
-    -std=c++1y
     )
 
 if(${CMAKE_BUILD_TYPE} STREQUAL Debug)
@@ -181,4 +180,8 @@ endif()
 string (REPLACE ";" " " CPP_FLAGS_STR "${CFLAGS_RELEASE} ${DEFS_RELEASE}")
 SET( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${CPP_FLAGS_STR}" )
 
-target_link_libraries( liquidcore node ${log-lib} stdc++)
+target_link_libraries( liquidcore node ${log-lib})
+#message(WARNING "NDK:${CMAKE_ANDROID_NDK}  BINDIR: ${CMAKE_ANDROID_ARCH_ABI}")
+#add_custom_command(TARGET liquidcore POST_BUILD
+ #           COMMAND ${CMAKE_COMMAND} -E copy ${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.9/libs/${CMAKE_ANDROID_ARCH_ABI}/libgnustl_shared.so ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
+            #)
